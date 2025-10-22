@@ -1,7 +1,11 @@
 # Prerequisites
 *.d
+<<<<<<< HEAD
 .vs/*
 .vscode/*
+=======
+
+>>>>>>> network
 # Compiled Object files
 *.slo
 *.lo
@@ -14,7 +18,11 @@
 
 # Linker files
 *.ilk
+<<<<<<< HEAD
 *.json
+=======
+
+>>>>>>> network
 # Debugger Files
 *.pdb
 
