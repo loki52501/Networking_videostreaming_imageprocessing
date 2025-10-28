@@ -1,0 +1,35 @@
+@startuml Day2SecurePipeline
+title Day 2 -- Threaded Secure Streaming (fill in before exporting PNG)
+
+skinparam backgroundColor #ffffff
+skinparam node {
+    BackgroundColor #e8f0fe
+    BorderColor #3759b5
+}
+skinparam note {
+    BackgroundColor #fffbe6
+    BorderColor #b59f37
+}
+
+actor "Camera Thread" as Camera
+node "Ring Buffer\n(size = 3)\nTODO: annotate slots" as Buffer
+node "Processing Thread\n(simulated AES-GCM)" as Processor
+node "Display / Network Out" as Display
+
+Camera --> Buffer : wait(full?)\nnotify(empty?)
+Buffer --> Processor : wait(empty?)\nnotify(full?)
+Processor --> Display : TODO: annotate encryption delay
+
+note right of Buffer
+  TODO:
+  - Mark mutex scope
+  - Indicate condition variables
+  - Call out backpressure path
+end note
+
+note bottom
+  Export this diagram to PNG and save as architecture_day2.png.
+  Keep the PlantUML source in the repo if you find it useful.
+end note
+
+@enduml

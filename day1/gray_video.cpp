@@ -1,114 +1,63 @@
-// Day 1 — "Hello, Memory" Video Reader with FPS and timing
-// Reads from default camera (0) or a file if a path is provided.
-// Displays grayscale video, instantaneous FPS, and processing time.
+#include <opencv2/opencv.hpp>
 #include <iostream>
-#include <string>
-#include <vector>
-#include<opencv2/opencv.hpp>
-using namespace cv;
+#include<chrono>
 using namespace std;
-
-
-static void printFrameMemoryInfo(const Mat &frame) {
-    if (frame.empty()) return;
-    int width = frame.cols;
-    int height = frame.rows;
-    int channels = frame.channels();
-    size_t bytes = static_cast<size_t>(width) * static_cast<size_t>(height) * static_cast<size_t>(channels);
-    cout << "Frame: " << width << "x" << height
-         << " x " << channels << " bytes/channel = " << bytes << " bytes (~"
-         << (bytes / (1024.0 * 1024.0)) << " MB)" << endl;
-}
-
-int main(int argc, char** argv) {
-    // Input source: default camera or file path passed as first argument
-    bool useCamera = true;
-   string sourcePath;
-    if (argc > 1) {
-        useCamera = false;
-        sourcePath = argv[1];
-    }
-
-    VideoCapture cap;
-    if (useCamera) {
-        cap.open(0);
-        if (!cap.isOpened()) {
-            cerr << "Failed to open default camera (0). "
-                      << "Tip: pass a video file path as an argument, e.g., gray_video <file.mp4>\n";
-            return -1;
-        }
-    } else {
-        cap.open(sourcePath);
-        if (!cap.isOpened()) {
-            cerr << "Failed to open source: " << sourcePath << "\n";
-            return -1;
-        }
-    }
-
-    // Optionally set a reasonable resolution to avoid huge frames on some webcams
-    if (useCamera) {
-        cap.set(CAP_PROP_FRAME_WIDTH, 1280);
-        cap.set(CAP_PROP_FRAME_HEIGHT, 720);
-    }
-
-    Mat frame, gray;
-    const double freq = getTickFrequency();
-    int64 prevTick = getTickCount();
-    int64 frameStartTick = 0;
-    double procMs = 0.0;
-    double procMsAvg = 0.0;
-    const double alpha = 0.05; // EMA smoothing factor for average processing time
-
-    // Warm up: read first valid frame to report memory info
-    if (!cap.read(frame) || frame.empty()) {
-        std::cerr << "No frames from source." << std::endl;
-        return -1;
-    }
-    printFrameMemoryInfo(frame);
-
-    // Pre-allocate gray with same size (single channel)
-    gray.create(frame.size(), CV_8UC1);
-    const std::string windowName = "Gray Video";
-    namedWindow(windowName, WINDOW_NORMAL);
-
-    // Show the first frame as grayscale too
-    cvtColor(frame, gray, COLOR_BGR2GRAY);
-    imshow(windowName, gray);
-    if (waitKey(1) == 27) return 0; // ESC
-
+using namespace cv;
+using namespace chrono;
+// Day 1 – Gray Video capture template.
+// Fill each TODO to connect the capture-to-display path and instrument FPS plus memory touchpoints.
+int main() {
+    // TODO: create a cv::VideoCapture bound to the default camera (index 0).
+    VideoCapture v(0);
+    // TODO: validate that the capture opened successfully; print an error to std::cerr and return -1 if not.
+    if(!v.isOpened())
+   { cerr<<"there is no webcam";
+    return -1; } 
+    v.set(CAP_PROP_FRAME_WIDTH, 1920);
+    v.set(CAP_PROP_FRAME_HEIGHT,1080);
+    // TODO: declare cv::Mat buffers to hold the raw BGR frame and the grayscale conversion.
+    Mat frame, grey;
+    // TODO: grab an initial tick count with cv::getTickCount() so you can compute FPS deltas.
+    auto starttime=high_resolution_clock::now();
+    int frame_count=0;
+    double fps=0;
     while (true) {
-        frameStartTick = getTickCount();
+        // TODO: read the next frame from the capture object; break the loop if the frame is empty.
+        v >> frame;
+        if(frame.empty())
+        break;   
+        // TODO: convert the BGR frame to grayscale using cv::cvtColor().
+        cout<<frame.channels()<<"\n";
+        cvtColor(frame,grey,COLOR_BGR2RGB);
+        // TODO: display the grayscale image with cv::imshow().
+        ostringstream title;
+        title<<"gray frame--"<<fps<<" FPS";
+        setWindowTitle("GRAY frame",title.str());
+        imshow("GRAY frame",grey);
+        frame_count++;
+        auto endtime=high_resolution_clock::now();
+            duration<double> dur=endtime-starttime;
+        if(dur.count()>=1.0)
+        {
+            fps=frame_count/dur.count();
+            cout<<dur.count()<<" dc fc "<<frame_count<<"\n";
+            std::size_t bytes = grey.total() * grey.elemSize();  // ~921,600 bytes
+std::cout << "Gray frame: " << grey.cols << "x" << grey.rows
+          << " -> " << bytes / (1024.0 * 1024.0) << " MB\n";
 
-        if (!cap.read(frame) || frame.empty()) {
-            std::cerr << "Stream ended or frame empty." << std::endl;
-            break;
+            starttime=high_resolution_clock::now();
+            frame_count=0;
         }
+        std::cout << "FPS: " << fps
+          << " | frame: " << static_cast<void*>(frame.data)
+          << " | gray: " << static_cast<void*>(grey.data) << '\n';
 
-        // Processing: BGR -> Gray
-        int64 t0 = getTickCount();
-        cvtColor(frame, gray, COLOR_BGR2GRAY);
-        int64 t1 = getTickCount();
-        procMs = (t1 - t0) * 1000.0 / getTickFrequency();
-        procMsAvg = (1.0 - alpha) * procMsAvg + alpha * procMs; // exponential moving average
-
-        // Compute instantaneous FPS based on wall time between frames
-        int64 now = getTickCount();
-        double dt = (now - prevTick) / getTickFrequency(); // seconds
-        prevTick = now;
-        double fps = (dt > 0.0) ? (1.0 / dt) : 0.0;
-
-        // Display with live stats
-        std::string title = windowName + " | FPS: " + cv::format("%.1f", fps)
-                           + " | proc: " + cv::format("%.2f", procMs) + " ms"
-                           + " (avg " + cv::format("%.2f", procMsAvg) + " ms)";
-        setWindowTitle(windowName, title);
-        imshow(windowName, gray);
-
-        // Exit on ESC
-        int key = waitKey(1);
-        if (key == 27) break;
+        // TODO: exit the loop when the user presses ESC (waitKey(1) == 27).
+        if(waitKey(1)==27)
+        break;
     }
 
+    // TODO: call cv::destroyAllWindows() (or an equivalent) before returning.
+    destroyAllWindows();
     return 0;
 }
-

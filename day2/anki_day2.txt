@@ -1,0 +1,16 @@
+Day 2 Anki Prompts (fill in the answers yourself)
+
+Q: Why must the Day 2 ring buffer stay bounded in a secure streaming pipeline?
+A: ____________________________________________________________________________
+
+Q: What predicate wakes the producer thread without risking buffer overflow?
+A: ____________________________________________________________________________
+
+Q: How does simulating AES-GCM latency change your FPS readings?
+A: ____________________________________________________________________________
+
+Q: What is the failure mode if the processing thread stalls mid-encryption?
+A: ____________________________________________________________________________
+
+Q: When would you add a second consumer thread, and how would you prove it is safe?
+A: ____________________________________________________________________________
