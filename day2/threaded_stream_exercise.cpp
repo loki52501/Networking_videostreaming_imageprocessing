@@ -32,21 +32,16 @@ struct sharedstate{
     steady_clock::duration totaldelay{0};
 };
 
-void renderFrame(const Mat& Frame, sharedstate& state)
+void renderFrame(const Mat& Frame)
 {
     Mat gray;
     cvtColor(Frame, gray, COLOR_BGR2GRAY);
-     const auto avgdelay=state.totaldelay/state.framesprocessed;
-    
-     ostringstream os;
-     os<<" frame per second =="<<duration_cast<milliseconds>(avgdelay).count()<<" fps";
-     setWindowTitle("heya",os.str());
     imshow("heya", gray);
     if(waitKey(1)==27)
     return;
 
 }
-void streamer(sharedstate& state, milliseconds frameInterval)
+void streamer(sharedstate & state, milliseconds frameInterval)
 {
     while (true)
     {
@@ -69,7 +64,7 @@ void streamer(sharedstate& state, milliseconds frameInterval)
             ++state.bufferunderruns;
             cout << "[WARN] Buffer underrun detected\n";
         }
-        renderFrame(item.frame,state);
+        renderFrame(item.frame);
     }
 }
 

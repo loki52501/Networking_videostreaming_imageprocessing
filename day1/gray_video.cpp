@@ -15,21 +15,21 @@ int main() {
     return -1; } 
     v.set(CAP_PROP_FRAME_WIDTH, 1920);
     v.set(CAP_PROP_FRAME_HEIGHT,1080);
-    //  declare cv::Mat buffers to hold the raw BGR frame and the grayscale conversion.
+    // TODO: declare cv::Mat buffers to hold the raw BGR frame and the grayscale conversion.
     Mat frame, grey;
-
+    // TODO: grab an initial tick count with cv::getTickCount() so you can compute FPS deltas.
     auto starttime=high_resolution_clock::now();
     int frame_count=0;
     double fps=0;
     while (true) {
-      
+        // TODO: read the next frame from the capture object; break the loop if the frame is empty.
         v >> frame;
         if(frame.empty())
         break;   
-  
+        // TODO: convert the BGR frame to grayscale using cv::cvtColor().
         cout<<frame.channels()<<"\n";
         cvtColor(frame,grey,COLOR_BGR2RGB);
-   
+        // TODO: display the grayscale image with cv::imshow().
         ostringstream title;
         title<<"gray frame--"<<fps<<" FPS";
         setWindowTitle("GRAY frame",title.str());

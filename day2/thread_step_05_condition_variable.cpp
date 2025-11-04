@@ -30,7 +30,7 @@ void producer() {
     {lock_guard<mutex> l(mtx);
         done=true;// TODO: lock the mutex and set 'done' to true.
     }
-cv.notify_all();// TODO: wake the consumer so it can exit.
+//cv.notify_all();// TODO: wake the consumer so it can exit.
 }
 
 void consumer() {
