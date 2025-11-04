@@ -1,10 +1,12 @@
  #include <cuda_runtime.h>
  #include <iostream>
- using namespace std;
+
  __global__ void hello()
  {
     int tid=threadIdx.x+blockIdx.x*blockDim.x;
-    cout<<"Hello world, tid: "<<tid<<" threadIdx: "<<threadIdx.x<<" blockIdx: "<<blockIdx.x<<" blockDim: "<<blockDim.x<<"\n";
+    printf("Hello world, tid: %d threadIdx: %d blockIdx: %d blockDim: %d\n",
+           tid, threadIdx.x, blockIdx.x, blockDim.x);
+
  }
  int main()
  {
