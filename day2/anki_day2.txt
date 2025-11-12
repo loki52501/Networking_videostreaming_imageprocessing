@@ -1,16 +1,16 @@
-Day 2 Anki Prompts (fill in the answers yourself)
+Day 2 Anki Cards
 
-Q: Why must the Day 2 ring buffer stay bounded in a secure streaming pipeline?
-A: ____________________________________________________________________________
+Q: What is the purpose of a ring buffer in a video pipeline?
+A: To decouple producer and consumer timing: smooth jitter, reduce blocking, and provide fixed memory usage.
 
-Q: What predicate wakes the producer thread without risking buffer overflow?
-A: ____________________________________________________________________________
+Q: When should a producer wait in a producer-consumer system?
+A: When the buffer is full.
 
-Q: How does simulating AES-GCM latency change your FPS readings?
-A: ____________________________________________________________________________
+Q: When should a consumer wait in a producer-consumer system?
+A: When the buffer is empty.
 
-Q: What is the failure mode if the processing thread stalls mid-encryption?
-A: ____________________________________________________________________________
+Q: What's the difference between a mutex and a condition variable?
+A: Mutex protects shared data; condition variable lets threads wait for a state change.
 
-Q: When would you add a second consumer thread, and how would you prove it is safe?
-A: ____________________________________________________________________________
+Q: What are three strategies when capture is faster than processing?
+A: Drop frames, increase buffer size, scale processing (more workers/GPU).

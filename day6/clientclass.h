@@ -10,7 +10,7 @@
 #include <winsock2.h>
 #include <WS2tcpip.h>
 #include <iphlpapi.h>
-
+#include<string>
 template<typename T>
 class client {
     std::deque<T> message;
@@ -33,8 +33,8 @@ public:
         hints.ai_socktype = sockettype;
     }
 
-    void addressing() {
-        if (getaddrinfo("127.0.0.1", DEFAULT_PORT, &hints, &result) != 0) {
+    void addressing(std::string port=DEFAULT_PORT) {
+        if (getaddrinfo("127.0.0.1",port.c_str() , &hints, &result) != 0) {
             std::cout << " the address has no memory or something is wrong with your declaration:\n";
         }
     }
@@ -88,16 +88,21 @@ public:
 
     void shutdowns() {
         closesocket(Csock);
-        WSACleanup();
+     
     }
 
-    void client_start() {
-        startup();
+    void client_start(std::string port) {
+
         Name(AF_INET, IPPROTO_TCP, SOCK_STREAM);
-        addressing();
+        addressing(port);
         create_socket();
         connection();
         send_recieve();
+           WSACleanup();
+
+    }
+    ~client()
+    {
         shutdowns();
     }
 };

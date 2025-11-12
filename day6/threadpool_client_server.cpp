@@ -5,11 +5,24 @@
 #include<vector>
 #include<functional>
 #include<memory>
-#include "Matrixc.h"
+#include<string>
+#include<chrono>
+#include<winsock2.h>
+#include<windows.h>
+#include "clientclass.h"
+#include "serverclass.h"
 using namespace std;
+using namespace chrono;
 
+struct WsaLifetime {
+    WsaLifetime() { WSAStartup(MAKEWORD(2,2), &wsd); }
+    ~WsaLifetime() { WSACleanup(); }
+private:
+    WSADATA wsd{};
+};
 
 class threadpool{
+high_resolution_clock::time_point start=high_resolution_clock::now();
 vector<thread> workers;
 mutex mtx;
 condition_variable cv;
@@ -42,7 +55,7 @@ auto submit(F&& f, Args&&... args)
 ->future<invoke_result_t<F,Args...>>
 {
 using Ret=invoke_result_t<F,Args...>;
-auto task=make_shared<packaged_task<Ret()>>(std::bind(forward<F>(f),forward<Args>(args)...));
+auto task=make_shared<packaged_task<Ret()>>(bind(forward<F>(f),forward<Args>(args)...));
 future<Ret>fut=task->get_future();
 {
     lock_guard<mutex>lock(mtx);
@@ -56,40 +69,56 @@ return fut;
 
 ~threadpool() {
         {
-            lock_guard<std::mutex> lock(mtx);
+            lock_guard<mutex> lock(mtx);
             stop = true;
         }
         cv.notify_all();
         for(auto &t : workers) t.join();
+      cout<<" \n time take to complete the thread id: "<<this_thread::get_id()<<" is:"<<duration<float,milli>(high_resolution_clock::now()-start).count()<<" ms\n";
+
     }
 };
 
 
-int main()
-{
-threadpool T(6);
-Matrix A;
-vector<future<void>>jobs;
-cout<<" this is Matrix A:\n";
-A.printes(A.A);
-cout<<" this is Matrix B:\n";
-
-A.printes(A.B);
-for(int i=0;i<4;i++)
-{
-    for(int j=0;j<4;j++)
- jobs.push_back( T.submit([&,i,j]{A.matrixadd(A.A,A.B,i,j);}));
-}
-cout<<jobs.size();
-for(int i=0;i<15;i++)
-{
-   jobs[i].get();}
+int main() {
+       WsaLifetime winsock;
+    server<string> s0("8000");
+    server<string> s1("8001");
+    server<string> s2("8002");
 
 
-cout<<"\n";
-A.printes(A.C);
+    atomic<bool> running{true};
+                     // RAII wrapper that calls WSAStartup/WSACleanup once
+threadpool serverPool(3);
+    // pool dedicated to long-lived accept loops
 
+    threadpool workerPool(8);            // add this
+    
+    auto srvLoop = [&](server<string>& srv) {
+                  srv.listening();  // bind + listen once
+        while (running.load()) {   
+          SOCKET client=srv.client_socket_creation();         // running is an atomic<bool> you control
+            workerPool.submit([&srv,&client]{srv.handle_client(client) ; });
+        }
+        srv.shutdowns();                         // close listening socket when shutting down
+    };
 
+    vector<future<void>> serverFutures;
+    serverFutures.emplace_back(serverPool.submit(srvLoop, ref(s0)));
+    serverFutures.emplace_back(serverPool.submit(srvLoop, ref(s1)));
+    serverFutures.emplace_back(serverPool.submit(srvLoop, ref(s2)));
 
-return -1;
+    // separate pool for short-lived clients or per-connection work
+    threadpool workerPoolc(8);
+    workerPoolc.submit([]{ client<string> c; c.client_start("8000"); });
+    workerPoolc.submit([]{ client<string> c; c.client_start("8001"); });
+    workerPoolc.submit([]{ client<string> c; c.client_start("8002"); });
+
+    // later, signal shutdown and wait
+running.store(false);
+s0.shutdowns();
+s1.shutdowns();
+s2.shutdowns();
+for (auto& fut : serverFutures) fut.get();
+
 }
